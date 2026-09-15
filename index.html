@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPI Interaktif — Microsoft Excel / Spreadsheet | SMPN 1 Paciran</title>
+<style>
+  :root{
+    --font-scale: 1.0;
+    --primary:#1e88d6;
+    --primary-dark:#0e5e9c;
+    --primary-light:#7fd0ff;
+    --accent:#ffb703;
+    --accent2:#ff7a3d;
+    --success:#22c55e;
+    --success-dark:#15803d;
+    --danger:#ef4444;
+    --danger-dark:#b91c1c;
+    --purple:#8b5cf6;
+    --ink:#0b3a5c;
+    --card-bg:#ffffff;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{width:100%;height:100%;}
+  body{
+    font-family:'Segoe UI', 'Trebuchet MS', Verdana, sans-serif;
+    background: linear-gradient(rgba(240,249,255,0.85), rgba(240,249,255,0.85)), url('bg-ruang-kelas.jpg') center/cover no-repeat fixed, #f0f9ff;
+    display:flex; align-items:center; justify-content:center;
+    height:100vh; width:100vw; overflow:hidden;
+  }
+  #app-wrap{
+    width:100vw; height:100vh; display:flex; align-items:center; justify-content:center;
+  }
+  #stage-16-9{
+    position:relative;
+    background:transparent; border:none; box-shadow:none; border-radius:0;
+    aspect-ratio:16/9;
+    width:min(100vw, 177.78vh);
+    height:min(100vh, 56.25vw);
+    overflow:hidden;
+    font-size:calc(15px * var(--font-scale, 1.0));
+    color:var(--ink);
+  }
+  .page{
+    position:absolute; inset:0;
+    display:none;
+    flex-direction:column;
+    padding:clamp(10px,1.8vh,18px);
+    overflow:hidden;
+  }
+  .page.active{display:flex;}
+
+  /* ===== TOP NAV (shared) ===== */
+  .topnav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:clamp(6px,1vh,10px) clamp(10px,1.5vw,16px);
+    background:linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius:14px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.18);
+    flex-shrink:0;
+    margin-bottom:clamp(8px,1.4vh,14px);
+  }
+  .topnav .left, .topnav .right{display:flex; align-items:center; gap:clamp(6px,1vw,10px);}
+  .nav-btn{
+    display:flex; align-items:center; justify-content:center;
+    width:clamp(40px,5.2vh,48px); height:clamp(40px,5.2vh,48px);
+    border-radius:50%; background:rgba(255,255,255,0.18); color:#fff;
+    font-size:clamp(18px,2.3vh,23px); border:2px solid rgba(255,255,255,0.35);
+    cursor:pointer; transition:transform .15s, background .15s; user-select:none;
+  }
+  .nav-btn:hover{ background:rgba(255,255,255,0.32); transform:scale(1.08); }
+  .nav-btn:active{ transform:scale(0.94); }
+  .nav-pill-btn{
+    display:flex; align-items:center; gap:6px;
+    background:rgba(255,255,255,0.2); color:#fff; border:2px solid rgba(255,255,255,0.35);
+    border-radius:999px; padding:6px 16px; font-weight:800; cursor:pointer;
+    font-size:clamp(13px,1.7vh,16px);
+  }
+  .nav-pill-btn:hover{background:rgba(255,255,255,0.32);}
+  .nav-title{color:#fff; font-weight:800; font-size:clamp(16px,2.2vh,22px); letter-spacing:.3px;}
+
+  /* ===== HEADER CAPSULE (cover) ===== */
+  .header-capsule{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    background:rgba(255,255,255,0.85); border-radius:999px;
+    padding:6px clamp(16px,2.4vw,26px); box-shadow:0 4px 14px rgba(0,0,0,0.15);
+    margin:0 auto; width:fit-content;
+  }
+  .header-capsule img{ height:clamp(50px,6.8vh,68px); filter:drop-shadow(0 2px 3px rgba(0,0,0,.25)); }
+  .header-capsule .school-name{font-weight:800; font-size:clamp(13px,1.8vh,17px); color:var(--primary-dark); line-height:1.15;}
+  .header-capsule .school-sub{font-size:clamp(10px,1.3vh,12px); color:#4a6b85; font-weight:700;}
+  .badge-row{display:flex; gap:6px; margin-top:2px;}
+  .badge{ background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; font-weight:800;
+    padding:2px 10px; border-radius:999px; font-size:clamp(9px,1.15vh,11px); box-shadow:0 2px 4px rgba(0,0,0,.15); }
+
+  /* ===== COVER PAGE ===== */
+  #page-cover{ justify-content:space-between; align-items:center; text-align:center; }
+  .cover-center{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:clamp(10px,1.6vh,18px); flex:1; }
+  .cover-title{
+    font-size:clamp(2.6rem, 6.2vw, 4.8rem); font-weight:900; color:var(--primary-dark);
+    text-shadow: 3px 3px 0 #fff, -3px -3px 0 #fff, 3px -3px 0 #fff, -3px 3px 0 #fff, 0 6px 14px rgba(0,0,0,.25);
+    line-height:1.05;
+  }
+  .cover-subtitle{
+    font-size:clamp(1.2rem, 2.8vw, 2.2rem); font-weight:800; color:var(--ink);
+    background:rgba(255,255,255,.55); padding:4px 20px; border-radius:14px;
+  }
+  .cover-meta{font-size:clamp(13px,1.8vh,16px); font-weight:700; color:var(--primary-dark);}
+  .play-btn{
+    display:flex; flex-direction:row; align-items:center; gap:14px;
+    background:linear-gradient(135deg, var(--accent), var(--accent2));
+    color:#fff; border:none; border-radius:999px; cursor:pointer;
+    padding:8px clamp(24px,3vw,36px) 8px 8px;
+    box-shadow:0 6px 18px rgba(255,122,61,0.5);
+    animation:pulseGlow 1.6s infinite;
+  }
+  .play-circle{
+    width:clamp(60px,8.5vh,80px); height:clamp(60px,8.5vh,80px); border-radius:50%;
+    background:#fff; color:var(--accent2); display:flex; align-items:center; justify-content:center;
+    font-size:clamp(26px,3.6vh,36px);
+  }
+  .play-label{ font-size:clamp(20px,3.4vh,32px); font-weight:900; letter-spacing:1px;}
+  @keyframes pulseGlow{
+    0%{box-shadow:0 0 0 0 rgba(255,122,61,0.55);}
+    70%{box-shadow:0 0 0 22px rgba(255,122,61,0);}
+    100%{box-shadow:0 0 0 0 rgba(255,122,61,0);}
+  }
+  .cover-footer{ font-size:clamp(11px,1.5vh,13px); font-weight:700; color:var(--primary-dark);
+    background:rgba(255,255,255,.6); border-radius:12px; padding:4px 16px; }
+
+  /* ===== DASHBOARD ===== */
+  .menu-grid{
+    flex:1; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr);
+    gap:clamp(10px,1.6vw,18px);
+  }
+  .menu-card{
+    background:var(--card-bg); border-radius:18px; padding:clamp(8px,1.4vh,14px);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    box-shadow:0 6px 14px rgba(0,50,90,0.15), inset 0 -4px 0 rgba(0,0,0,0.06);
+    cursor:pointer; transition:transform .15s, box-shadow .15s; text-align:center;
+    border:2px solid transparent;
+  }
+  .menu-card:hover{ transform:translateY(-4px) scale(1.02); box-shadow:0 10px 20px rgba(0,50,90,0.25); border-color:var(--primary-light); }
+  .icon-box{
+    width:clamp(66px,9vh,88px); height:clamp(66px,9vh,88px); border-radius:22px;
+    display:flex; align-items:center; justify-content:center; font-size:clamp(34px,4.8vh,46px);
+    box-shadow:0 4px 10px rgba(0,0,0,0.18);
+  }
+  .ib-1{background:linear-gradient(135deg,#60a5fa,#1e88d6);}
+  .ib-2{background:linear-gradient(135deg,#34d399,#059669);}
+  .ib-3{background:linear-gradient(135deg,#fbbf24,#f97316);}
+  .ib-4{background:linear-gradient(135deg,#f472b6,#db2777);}
+  .ib-5{background:linear-gradient(135deg,#a78bfa,#7c3aed);}
+  .ib-6{background:linear-gradient(135deg,#38bdf8,#0284c7);}
+  .menu-card h3{font-size:clamp(15px,2vh,20px); font-weight:800; color:var(--ink);}
+  .menu-card p{font-size:clamp(11px,1.4vh,13px); font-weight:600; color:#4a6b85; line-height:1.3;}
+
+  /* ===== GENERIC PAGE TITLE BAR ===== */
+  .page-title-bar{
+    display:inline-block; align-self:center;
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff;
+    font-weight:800; font-size:clamp(16px,2.2vh,22px); padding:6px 26px; border-radius:999px;
+    margin-bottom:clamp(8px,1.4vh,14px); box-shadow:0 4px 10px rgba(0,0,0,0.18); flex-shrink:0;
+  }
+
+  /* ===== TUJUAN PEMBELAJARAN ===== */
+  .tp-card{
+    flex:1; background:var(--card-bg); border-radius:22px; padding:clamp(14px,2.2vh,24px) clamp(20px,3vw,40px);
+    box-shadow:0 8px 20px rgba(0,50,90,0.18); display:flex; flex-direction:column; justify-content:center; gap:clamp(8px,1.3vh,14px);
+    overflow:hidden;
+  }
+  .tp-item{ display:flex; align-items:flex-start; gap:12px; }
+  .tp-icon{ font-size:clamp(20px,2.6vh,26px); flex-shrink:0; }
+  .tp-item p{ font-size:clamp(13.5px,1.7vh,16px); font-weight:600; line-height:1.4; color:var(--ink);}
+
+  /* ===== MATERI ===== */
+  #materi-body{ flex:1; display:flex; flex-direction:column; gap:clamp(6px,1vh,10px); overflow:hidden;}
+  .materi-svg-wrap{
+    background:rgba(255,255,255,0.55); border-radius:16px; padding:6px;
+    height:clamp(150px,24vh,230px); flex-shrink:0;
+  }
+  .materi-svg-wrap svg{width:100%; height:100%;}
+  .materi-grid{ flex:1; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); gap:clamp(8px,1.2vw,14px); overflow:hidden;}
+  .concept-card{
+    background:var(--card-bg); border-radius:16px; padding:clamp(6px,1vh,10px);
+    display:flex; flex-direction:column; align-items:center; text-align:center; gap:4px;
+    box-shadow:0 4px 10px rgba(0,50,90,0.14); overflow:hidden;
+  }
+  .concept-card .icon-box{width:clamp(44px,6.2vh,58px); height:clamp(44px,6.2vh,58px); border-radius:16px; font-size:clamp(24px,3.2vh,32px);}
+  .concept-card h4{font-size:clamp(13px,1.6vh,16px); font-weight:800; color:var(--ink); margin-top:2px;}
+  .concept-card p{font-size:clamp(10.5px,1.3vh,12.5px); font-weight:600; color:#4a6b85; line-height:1.32;}
+
+  /* ===== SIMULASI ===== */
+  #sim-body{flex:1; display:grid; grid-template-columns:1.15fr 1fr; gap:clamp(10px,1.5vw,16px); overflow:hidden;}
+  .sim-panel{ background:var(--card-bg); border-radius:18px; padding:clamp(10px,1.5vh,16px); box-shadow:0 6px 14px rgba(0,50,90,0.15); display:flex; flex-direction:column; overflow:hidden;}
+  .sim-panel h3{font-size:clamp(13px,1.7vh,16px); font-weight:800; color:var(--primary-dark); margin-bottom:6px;}
+  table.spreadsheet{ border-collapse:collapse; width:100%; flex-shrink:0;}
+  table.spreadsheet th{ background:var(--primary); color:#fff; font-size:clamp(11px,1.4vh,13px); padding:4px; border:1px solid #cfe6f7;}
+  table.spreadsheet td{ border:1px solid #cfe6f7; padding:0; text-align:center;}
+  table.spreadsheet td input{
+    width:100%; border:none; text-align:center; padding:6px 2px; font-size:clamp(12px,1.5vh,14px);
+    font-weight:700; color:var(--ink); background:#f7fbff; font-family:inherit;
+  }
+  table.spreadsheet td input:focus{ outline:2px solid var(--accent); background:#fff8e6;}
+  .formula-bar{
+    display:flex; align-items:center; gap:8px; background:#eef7ff; border-radius:10px; padding:6px 10px; margin-top:8px;
+    font-size:clamp(11px,1.4vh,13px); font-weight:700; color:var(--primary-dark);
+  }
+  .fx-select{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+  .fx-btn{
+    background:linear-gradient(135deg,#60a5fa,var(--primary)); color:#fff; border:none; border-radius:999px;
+    padding:6px 14px; font-weight:800; font-size:clamp(11px,1.4vh,13px); cursor:pointer;
+  }
+  .fx-btn.active-fx{ background:linear-gradient(135deg,var(--accent),var(--accent2)); }
+  .sim-result{ margin-top:8px; font-size:clamp(14px,2vh,20px); font-weight:900; color:var(--success-dark); text-align:center;}
+  .sim-chart-wrap{flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+  .sim-chart-wrap svg{width:100%; height:100%; max-height:clamp(220px,34vh,360px);}
+  .telemetry{ display:flex; justify-content:space-between; background:#eef7ff; border-radius:10px; padding:6px 10px; margin-top:6px; font-size:clamp(10.5px,1.3vh,12.5px); font-weight:700; color:var(--primary-dark);}
+
+  /* ===== EVALUASI ===== */
+  #eval-body{ flex:1; display:flex; flex-direction:column; overflow:hidden; gap:6px;}
+  .eval-progress{ display:flex; gap:8px; justify-content:center; margin-bottom:4px; flex-shrink:0;}
+  .eval-step-dot{ width:26px; height:26px; border-radius:50%; background:#cbd5e1; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px;}
+  .eval-step-dot.done{background:var(--success);}
+  .eval-step-dot.current{background:var(--primary);}
+  .eval-round{flex:1; display:none; flex-direction:column; overflow:hidden;}
+  .eval-round.active{display:flex;}
+  .q-card{ background:var(--card-bg); border-radius:16px; padding:clamp(10px,1.6vh,16px); margin-bottom:8px; box-shadow:0 4px 10px rgba(0,50,90,0.12);}
+  .q-card p.q-text{font-size:clamp(13.5px,1.8vh,17px); font-weight:800; color:var(--ink); margin-bottom:8px;}
+  .opts-row{ display:flex; gap:8px; flex-wrap:wrap;}
+  .opt-btn{
+    flex:1; min-width:110px; background:#eef7ff; border:2px solid #cfe6f7; border-radius:12px;
+    padding:10px 22px; font-weight:700; font-size:clamp(13.5px,1.8vh,17px); cursor:pointer; color:var(--ink);
+    transition:all .15s;
+  }
+  .opt-btn:hover{background:#dcefff;}
+  .opt-btn.correct{background:var(--success); color:#fff; border-color:var(--success-dark);}
+  .opt-btn.wrong{background:var(--danger); color:#fff; border-color:var(--danger-dark);}
+  .eval-questions-scroll{flex:1; overflow:hidden; display:flex; flex-direction:column; justify-content:center; gap:6px;}
+
+  .match-wrap{ flex:1; display:flex; gap:10px; overflow:hidden; position:relative;}
+  .match-col{ flex:1; display:flex; flex-direction:column; justify-content:space-around; gap:6px;}
+  .match-item{
+    background:var(--card-bg); border:2px solid #cfe6f7; border-radius:12px; padding:8px 12px;
+    font-size:clamp(12px,1.6vh,14.5px); font-weight:700; color:var(--ink); cursor:pointer; text-align:center;
+    box-shadow:0 3px 6px rgba(0,50,90,0.1); z-index:2;
+  }
+  .match-item.selected{ border-color:var(--accent); background:#fff6df;}
+  .match-item.matched{ background:#dcfce7; border-color:var(--success); cursor:default;}
+  #match-svg-lines{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:1;}
+
+  .tf-item{ background:var(--card-bg); border-radius:14px; padding:clamp(8px,1.4vh,14px) 16px; margin-bottom:8px; box-shadow:0 4px 10px rgba(0,50,90,0.12); display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .tf-item p{font-size:clamp(13px,1.7vh,16px); font-weight:700; color:var(--ink); flex:1;}
+  .tf-btns{display:flex; gap:8px;}
+  .tf-btn{ border:none; border-radius:10px; padding:8px 16px; font-weight:800; font-size:clamp(13px,1.7vh,15px); cursor:pointer; color:#fff;}
+  .tf-btn.tbtn{background:var(--success);}
+  .tf-btn.fbtn{background:var(--danger);}
+  .tf-btn:disabled{opacity:.55; cursor:default;}
+
+  .recap-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;}
+  .trophy{ font-size:clamp(44px,7vh,70px); filter:drop-shadow(0 4px 6px rgba(0,0,0,.25)); animation:trophyBounce 1.2s ease infinite alternate;}
+  @keyframes trophyBounce{ from{transform:translateY(0);} to{transform:translateY(-10px);} }
+  .recap-score{ font-size:clamp(2.4rem,5vw,3.6rem); font-weight:900; color:var(--primary-dark);}
+  .recap-breakdown{ display:flex; gap:14px; }
+  .recap-chip{ background:var(--card-bg); border-radius:12px; padding:6px 16px; font-weight:800; font-size:clamp(12px,1.6vh,14px); box-shadow:0 3px 8px rgba(0,50,90,0.15);}
+  .reset-btn{ margin-top:6px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:999px; padding:8px 24px; font-weight:800; font-size:clamp(13px,1.7vh,15px); cursor:pointer;}
+
+  /* ===== PROFIL GURU ===== */
+  #page-profil{align-items:center; justify-content:center;}
+  .profil-card{
+    background:var(--card-bg); border-radius:24px; padding:clamp(16px,2.4vh,28px) clamp(24px,4vw,50px);
+    box-shadow:0 10px 24px rgba(0,50,90,0.2); display:flex; align-items:center; gap:clamp(18px,3vw,36px);
+  }
+  .profil-photo{
+    width:clamp(130px,18vh,175px); height:clamp(130px,18vh,175px); border-radius:50%;
+    overflow:hidden; border:5px solid transparent;
+    background:linear-gradient(135deg,var(--accent),var(--primary)) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    box-shadow:0 8px 16px rgba(0,0,0,.25); flex-shrink:0; position:relative;
+  }
+  .profil-photo img{width:100%; height:100%; object-fit:cover;}
+  .profil-info h2{font-size:clamp(20px,3vh,26px); font-weight:900; color:var(--primary-dark);}
+  .profil-info .role{font-size:clamp(13px,1.7vh,15px); font-weight:700; color:var(--accent2); margin:4px 0;}
+  .profil-info .school{font-size:clamp(13px,1.6vh,15px); font-weight:600; color:#4a6b85;}
+  .profil-quote{ margin-top:10px; font-size:clamp(12.5px,1.6vh,14.5px); font-style:italic; font-weight:600; color:var(--ink); border-left:4px solid var(--accent); padding-left:10px;}
+
+  /* ===== MODAL WAWASAN ===== */
+  .modal-overlay{ position:absolute; inset:0; background:rgba(10,40,60,0.55); display:none; align-items:center; justify-content:center; z-index:50;}
+  .modal-overlay.active{display:flex;}
+  .modal-box{
+    background:#fff; border-radius:22px; padding:clamp(18px,3vh,30px) clamp(20px,3.4vw,36px); max-width:78%;
+    box-shadow:0 14px 30px rgba(0,0,0,.35); text-align:center; position:relative;
+  }
+  .modal-box .fact-icon{ font-size:clamp(36px,5.6vh,52px); margin-bottom:8px;}
+  .modal-box p{ font-size:clamp(14px,2vh,18px); font-weight:700; color:var(--ink); line-height:1.4;}
+  .modal-close{ position:absolute; top:10px; right:14px; cursor:pointer; font-size:20px; color:#94a3b8; font-weight:900;}
+  .modal-next{ margin-top:14px; background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; border:none; border-radius:999px; padding:8px 22px; font-weight:800; cursor:pointer;}
+
+  .accessibility-controls{display:flex; align-items:center; gap:4px;}
+  .acc-btn{ background:rgba(255,255,255,0.2); color:#fff; border:2px solid rgba(255,255,255,.35); border-radius:8px; width:30px; height:30px; font-weight:900; cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app-wrap">
+<div id="stage-16-9">
+
+  <!-- ============ PAGE 1: COVER ============ -->
+  <div class="page active" id="page-cover">
+    <div class="header-capsule">
+      <img src="logo_smp_fix-removebg-preview.png" alt="Logo Sekolah" onerror="this.style.display='none'">
+      <div>
+        <div class="school-name">SMPN 1 PACIRAN</div>
+        <div class="school-sub">Dinas Pendidikan Kabupaten Lamongan</div>
+        <div class="badge-row">
+          <span class="badge">Kurikulum Merdeka</span>
+          <span class="badge">Fase D</span>
+        </div>
+      </div>
+    </div>
+    <div class="cover-center">
+      <div class="cover-title">📊 Excel / Spreadsheet</div>
+      <div class="cover-subtitle">Koding Kecerdasan Artifisial — Kelas VIII</div>
+      <div class="cover-meta">Mengelola & Menampilkan Data dengan Lembar Kerja Digital</div>
+      <button class="play-btn" onclick="sfxClick(); goTo('page-menu');">
+        <span class="play-circle">▶</span>
+        <span class="play-label">MULAI</span>
+      </button>
+    </div>
+    <div class="cover-footer">Disusun oleh <b>Irma Rachmawati, S.Kom</b> — SMPN 1 Paciran &nbsp;|&nbsp; "Belajar Data, Siap Masa Depan"</div>
+  </div>
+
+  <!-- ============ PAGE 2: MENU ============ -->
+  <div class="page" id="page-menu">
+    <div class="topnav">
+      <div class="left">
+        <div class="nav-btn" onclick="sfxClick(); goTo('page-cover');" title="Beranda">🏠</div>
+        <div class="nav-title">Menu Utama</div>
+      </div>
+      <div class="right accessibility-controls">
+        <div class="acc-btn" onclick="changeFont(-1)">A-</div>
+        <div class="acc-btn" onclick="changeFont(1)">A+</div>
+        <div class="nav-btn" id="sound-toggle-btn" onclick="toggleSound()" title="Suara">🔊</div>
+      </div>
+    </div>
+    <div class="menu-grid">
+      <div class="menu-card" onclick="sfxClick(); goTo('page-tujuan');">
+        <div class="icon-box ib-1">🎯</div>
+        <h3>Tujuan Pembelajaran</h3>
+        <p>Capaian & indikator kompetensi siswa</p>
+      </div>
+      <div class="menu-card" onclick="sfxClick(); goTo('page-materi');">
+        <div class="icon-box ib-2">📖</div>
+        <h3>Materi Pembelajaran</h3>
+        <p>Eksplorasi konsep kunci Spreadsheet</p>
+      </div>
+      <div class="menu-card" onclick="sfxClick(); goTo('page-simulasi');">
+        <div class="icon-box ib-3">🕹️</div>
+        <h3>Simulasi Interaktif</h3>
+        <p>Laboratorium rumus & grafik data</p>
+      </div>
+      <div class="menu-card" onclick="sfxClick(); goTo('page-evaluasi');">
+        <div class="icon-box ib-4">📝</div>
+        <h3>Evaluasi</h3>
+        <p>3 jenis uji pemahaman, 100 poin</p>
+      </div>
+      <div class="menu-card" onclick="sfxClick(); goTo('page-profil');">
+        <div class="icon-box ib-5">👨‍🏫</div>
+        <h3>Profil Guru</h3>
+        <p>Informasi fasilitator pendidik</p>
+      </div>
+      <div class="menu-card" onclick="sfxClick(); openWawasan();">
+        <div class="icon-box ib-6">💡</div>
+        <h3>Wawasan & Fakta</h3>
+        <p>Fakta menarik seputar spreadsheet</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 3: TUJUAN PEMBELAJARAN ============ -->
+  <div class="page" id="page-tujuan">
+    <div class="topnav">
+      <div class="left"><div class="nav-btn" onclick="sfxClick(); goTo('page-menu');" title="Kembali">↩</div><div class="nav-title">🎯 Tujuan Pembelajaran</div></div>
+      <div class="right"><div class="nav-btn" onclick="sfxClick(); goTo('page-cover');" title="Beranda">🏠</div></div>
+    </div>
+    <div class="tp-card">
+      <div class="tp-item"><span class="tp-icon">🧮</span><p>Siswa mampu mengenali komponen antarmuka aplikasi spreadsheet (sel, baris, kolom, dan sheet).</p></div>
+      <div class="tp-item"><span class="tp-icon">🔣</span><p>Siswa mampu menggunakan rumus dan fungsi dasar (SUM, AVERAGE, MAX, MIN, COUNT) untuk mengolah data.</p></div>
+      <div class="tp-item"><span class="tp-icon">🎨</span><p>Siswa mampu memformat dan menyusun data agar informasi mudah dibaca dan dianalisis.</p></div>
+      <div class="tp-item"><span class="tp-icon">📊</span><p>Siswa mampu membuat grafik (chart) sederhana untuk menampilkan data sesuai tujuan penyajian.</p></div>
+      <div class="tp-item"><span class="tp-icon">🔀</span><p>Siswa mampu mengurutkan (sort) dan menyaring (filter) data sesuai kebutuhan analisis.</p></div>
+      <div class="tp-item"><span class="tp-icon">💾</span><p>Siswa mampu menyimpan dan berbagi file spreadsheet dengan format yang tepat.</p></div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 4: MATERI ============ -->
+  <div class="page" id="page-materi">
+    <div class="topnav">
+      <div class="left"><div class="nav-btn" onclick="sfxClick(); goTo('page-menu');" title="Kembali">↩</div><div class="nav-title">📖 Materi Spreadsheet</div></div>
+      <div class="right"><div class="nav-btn" onclick="sfxClick(); goTo('page-cover');" title="Beranda">🏠</div></div>
+    </div>
+    <div id="materi-body">
+      <div class="materi-svg-wrap">
+        <svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gridGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#7fd0ff"/><stop offset="100%" stop-color="#1e88d6"/>
+            </linearGradient>
+          </defs>
+          <!-- grid representing spreadsheet -->
+          <g stroke="url(#gridGrad)" stroke-width="4">
+            <line x1="60" y1="40" x2="60" y2="220"/><line x1="220" y1="40" x2="220" y2="220"/>
+            <line x1="380" y1="40" x2="380" y2="220"/><line x1="540" y1="40" x2="540" y2="220"/>
+            <line x1="60" y1="40" x2="540" y2="40"/><line x1="60" y1="100" x2="540" y2="100"/>
+            <line x1="60" y1="160" x2="540" y2="160"/><line x1="60" y1="220" x2="540" y2="220"/>
+          </g>
+          <circle cx="220" cy="100" r="14" fill="#ffb703" stroke="#fff" stroke-width="3"/>
+          <rect x="150" y="10" width="140" height="24" rx="6" fill="white" stroke="#1e88d6" stroke-width="1.5"/>
+          <text x="220" y="27" font-size="14" font-weight="800" fill="#0e5e9c" text-anchor="middle">SEL AKTIF (B2)</text>
+          <rect x="0" y="228" width="120" height="24" rx="6" fill="white" stroke="#059669" stroke-width="1.5"/>
+          <text x="60" y="245" font-size="13" font-weight="800" fill="#059669" text-anchor="middle">KOLOM & BARIS</text>
+          <!-- flow arrow to chart -->
+          <path d="M 560 130 C 610 60, 660 60, 700 100" fill="none" stroke="#ff7a3d" stroke-width="5" stroke-dasharray="10 8">
+            <animate attributeName="stroke-dashoffset" from="60" to="0" dur="1.2s" repeatCount="indefinite"/>
+          </path>
+          <rect x="640" y="40" width="220" height="180" rx="10" fill="#eef7ff" stroke="#1e88d6" stroke-width="2"/>
+          <rect x="670" y="150" width="24" height="50" fill="#38bdf8"/>
+          <rect x="710" y="120" width="24" height="80" fill="#1e88d6"/>
+          <rect x="750" y="90" width="24" height="110" fill="#0e5e9c"/>
+          <rect x="790" y="130" width="24" height="70" fill="#7fd0ff"/>
+          <rect x="655" y="45" width="150" height="22" rx="6" fill="white" stroke="#0e5e9c" stroke-width="1.5"/>
+          <text x="730" y="61" font-size="13" font-weight="800" fill="#0e5e9c" text-anchor="middle">GRAFIK / CHART</text>
+        </svg>
+      </div>
+      <div class="materi-grid">
+        <div class="concept-card"><div class="icon-box ib-1">🧮</div><h4>Antarmuka Dasar</h4><p>Cell (perpotongan kolom & baris), Sheet Tab untuk berpindah lembar kerja.</p></div>
+        <div class="concept-card"><div class="icon-box ib-2">🔣</div><h4>Rumus & Fungsi</h4><p>Diawali tanda "="; contoh =SUM(), =AVERAGE(), =MAX(), =MIN(), =COUNT().</p></div>
+        <div class="concept-card"><div class="icon-box ib-3">🎨</div><h4>Format Data</h4><p>Bold, warna, border, format angka/mata uang/tanggal agar data mudah dibaca.</p></div>
+        <div class="concept-card"><div class="icon-box ib-4">📊</div><h4>Grafik / Chart</h4><p>Visualisasi data seperti bar, line, dan pie chart sesuai tujuan penyajian.</p></div>
+        <div class="concept-card"><div class="icon-box ib-5">🔀</div><h4>Sort & Filter</h4><p>Mengurutkan (A-Z / Z-A) dan menyaring data sesuai kriteria tertentu.</p></div>
+        <div class="concept-card"><div class="icon-box ib-6">💾</div><h4>Simpan & Bagikan</h4><p>Format .xlsx / .csv, ekspor PDF, dan berbagi file lewat penyimpanan cloud.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 5: SIMULASI ============ -->
+  <div class="page" id="page-simulasi">
+    <div class="topnav">
+      <div class="left"><div class="nav-btn" onclick="sfxClick(); goTo('page-menu');" title="Kembali">↩</div><div class="nav-title">🕹️ Simulasi Rumus & Grafik</div></div>
+      <div class="right"><div class="nav-btn" onclick="sfxClick(); goTo('page-cover');" title="Beranda">🏠</div></div>
+    </div>
+    <div id="sim-body">
+      <div class="sim-panel">
+        <h3>💻 Lembar Kerja (klik & ubah angka)</h3>
+        <table class="spreadsheet">
+          <tr><th></th><th>A (Data)</th></tr>
+          <tr><td style="background:#e0f0ff;font-weight:800;">1</td><td><input type="number" class="cell-input" value="72" oninput="calcSim()"></td></tr>
+          <tr><td style="background:#e0f0ff;font-weight:800;">2</td><td><input type="number" class="cell-input" value="85" oninput="calcSim()"></td></tr>
+          <tr><td style="background:#e0f0ff;font-weight:800;">3</td><td><input type="number" class="cell-input" value="90" oninput="calcSim()"></td></tr>
+          <tr><td style="background:#e0f0ff;font-weight:800;">4</td><td><input type="number" class="cell-input" value="64" oninput="calcSim()"></td></tr>
+          <tr><td style="background:#e0f0ff;font-weight:800;">5</td><td><input type="number" class="cell-input" value="78" oninput="calcSim()"></td></tr>
+        </table>
+        <div class="formula-bar">fx &nbsp; <span id="formula-preview">=SUM(A1:A5)</span></div>
+        <div class="fx-select">
+          <button class="fx-btn active-fx" onclick="setFx('SUM',this)">SUM</button>
+          <button class="fx-btn" onclick="setFx('AVERAGE',this)">AVERAGE</button>
+          <button class="fx-btn" onclick="setFx('MAX',this)">MAX</button>
+          <button class="fx-btn" onclick="setFx('MIN',this)">MIN</button>
+        </div>
+        <div class="sim-result" id="sim-result">Hasil: 389</div>
+        <div class="telemetry"><span id="telem-fungsi">Fungsi aktif: SUM</span><span id="telem-sel">Sel terisi: 5</span></div>
+      </div>
+      <div class="sim-panel">
+        <h3>📊 Visualisasi Grafik Batang</h3>
+        <div class="sim-chart-wrap">
+          <svg id="chart-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 6: EVALUASI ============ -->
+  <div class="page" id="page-evaluasi">
+    <div class="topnav">
+      <div class="left"><div class="nav-btn" onclick="sfxClick(); goTo('page-menu');" title="Kembali">↩</div><div class="nav-title">📝 Evaluasi (100 Poin)</div></div>
+      <div class="right"><div class="nav-btn" onclick="sfxClick(); goTo('page-cover');" title="Beranda">🏠</div></div>
+    </div>
+    <div id="eval-body">
+      <div class="eval-progress">
+        <div class="eval-step-dot current" id="dot-A">A</div>
+        <div class="eval-step-dot" id="dot-B">B</div>
+        <div class="eval-step-dot" id="dot-C">C</div>
+        <div class="eval-step-dot" id="dot-D">D</div>
+      </div>
+
+      <!-- BABAK A -->
+      <div class="eval-round active" id="round-A">
+        <div class="eval-questions-scroll" id="babakA-container"></div>
+      </div>
+
+      <!-- BABAK B -->
+      <div class="eval-round" id="round-B">
+        <div class="match-wrap">
+          <svg id="match-svg-lines"></svg>
+          <div class="match-col" id="match-left"></div>
+          <div class="match-col" id="match-right"></div>
+        </div>
+      </div>
+
+      <!-- BABAK C -->
+      <div class="eval-round" id="round-C">
+        <div id="babakC-container" style="flex:1; display:flex; flex-direction:column; justify-content:center;"></div>
+      </div>
+
+      <!-- BABAK D -->
+      <div class="eval-round" id="round-D">
+        <div class="recap-wrap">
+          <div class="trophy">🏆</div>
+          <div class="recap-score" id="final-score">0 / 100</div>
+          <div class="recap-breakdown">
+            <div class="recap-chip">Babak A: <span id="score-A">0</span>/30</div>
+            <div class="recap-chip">Babak B: <span id="score-B">0</span>/40</div>
+            <div class="recap-chip">Babak C: <span id="score-C">0</span>/30</div>
+          </div>
+          <button class="reset-btn" onclick="resetEval()">🔄 Ulangi Evaluasi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 7: PROFIL GURU ============ -->
+  <div class="page" id="page-profil">
+    <div class="topnav" style="position:absolute; top:clamp(10px,1.8vh,18px); left:clamp(10px,1.8vh,18px); right:clamp(10px,1.8vh,18px); width:auto;">
+      <div class="left"><div class="nav-btn" onclick="sfxClick(); goTo('page-menu');" title="Kembali">↩</div><div class="nav-title">👨‍🏫 Profil Guru</div></div>
+      <div class="right"><div class="nav-btn" onclick="sfxClick(); goTo('page-cover');" title="Beranda">🏠</div></div>
+    </div>
+    <div class="profil-card">
+      <div class="profil-photo"><img src="foto_profil.jpeg" alt="Foto Guru" onerror="this.style.display='none'"></div>
+      <div class="profil-info">
+        <h2>Irma Rachmawati, S.Kom</h2>
+        <div class="role">Guru Koding & Kecerdasan Artifisial</div>
+        <div class="school">SMPN 1 Paciran, Lamongan</div>
+        <div class="profil-quote">"Data yang terkelola dengan baik adalah awal dari keputusan yang cerdas."</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL WAWASAN ============ -->
+  <div class="modal-overlay" id="modal-wawasan">
+    <div class="modal-box">
+      <span class="modal-close" onclick="closeWawasan()">✕</span>
+      <div class="fact-icon">💡</div>
+      <p id="wawasan-text">Fakta menarik...</p>
+      <button class="modal-next" onclick="nextWawasan()">Fakta Berikutnya ▶</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+/* ================= NAVIGASI ================= */
+function goTo(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='page-simulasi'){ calcSim(); }
+}
+
+/* ================= FONT SCALE ================= */
+let fontScale = 1.0;
+function changeFont(dir){
+  fontScale = Math.min(1.15, Math.max(0.85, fontScale + dir*0.05));
+  document.documentElement.style.setProperty('--font-scale', fontScale);
+  sfxClick();
+}
+
+/* ================= AUDIO SINTETIS (Web Audio API) ================= */
+let soundOn = true;
+let audioCtx = null;
+function getCtx(){
+  if(!audioCtx){ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+  return audioCtx;
+}
+function toggleSound(){
+  soundOn = !soundOn;
+  document.getElementById('sound-toggle-btn').textContent = soundOn ? '🔊' : '🔇';
+}
+function sfxClick(){
+  if(!soundOn) return;
+  try{
+    const ctx=getCtx(); const o=ctx.createOscillator(); const g=ctx.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(450, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(880, ctx.currentTime+0.12);
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.15);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.16);
+  }catch(e){}
+}
+function sfxCorrect(){
+  if(!soundOn) return;
+  try{
+    const ctx=getCtx(); const freqs=[523.25,659.25,783.99];
+    freqs.forEach((f,i)=>{
+      const o=ctx.createOscillator(); const g=ctx.createGain();
+      o.type='triangle'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.13, ctx.currentTime+i*0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+i*0.05+0.4);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(ctx.currentTime+i*0.05); o.stop(ctx.currentTime+i*0.05+0.42);
+    });
+  }catch(e){}
+}
+function sfxWrong(){
+  if(!soundOn) return;
+  try{
+    const ctx=getCtx(); const o=ctx.createOscillator(); const g=ctx.createGain();
+    o.type='sawtooth'; o.frequency.setValueAtTime(220, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(110, ctx.currentTime+0.35);
+    g.gain.setValueAtTime(0.14, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.42);
+  }catch(e){}
+}
+
+/* ================= WAWASAN & FAKTA ================= */
+const wawasanFacts = [
+  "Tahukah kamu? Program spreadsheet elektronik pertama bernama VisiCalc dirilis pada tahun 1979.",
+  "Microsoft Excel pertama kali dirilis untuk komputer Macintosh pada tahun 1985.",
+  "Satu lembar kerja (sheet) modern dapat menampung lebih dari 1 juta baris data!",
+  "Tanda '=' di awal sel memberi tahu spreadsheet bahwa isi sel tersebut adalah sebuah rumus.",
+  "Grafik (chart) membantu kita melihat pola data dalam hitungan detik, jauh lebih cepat daripada membaca angka satu per satu.",
+  "Fitur Sort & Filter memudahkan kita menemukan data penting di antara ribuan baris data."
+];
+let wawasanIndex = 0;
+function openWawasan(){
+  wawasanIndex = 0;
+  document.getElementById('wawasan-text').textContent = wawasanFacts[wawasanIndex];
+  document.getElementById('modal-wawasan').classList.add('active');
+}
+function nextWawasan(){
+  sfxClick();
+  wawasanIndex = (wawasanIndex+1) % wawasanFacts.length;
+  document.getElementById('wawasan-text').textContent = wawasanFacts[wawasanIndex];
+}
+function closeWawasan(){
+  sfxClick();
+  document.getElementById('modal-wawasan').classList.remove('active');
+}
+
+/* ================= SIMULASI RUMUS & GRAFIK ================= */
+let currentFx = 'SUM';
+function setFx(fx, btn){
+  sfxClick();
+  currentFx = fx;
+  document.querySelectorAll('.fx-btn').forEach(b=>b.classList.remove('active-fx'));
+  btn.classList.add('active-fx');
+  document.getElementById('formula-preview').textContent = '='+fx+'(A1:A5)';
+  document.getElementById('telem-fungsi').textContent = 'Fungsi aktif: '+fx;
+  calcSim();
+}
+function calcSim(){
+  const inputs = document.querySelectorAll('.cell-input');
+  const values = Array.from(inputs).map(i=>parseFloat(i.value)||0);
+  let result = 0;
+  if(currentFx==='SUM') result = values.reduce((a,b)=>a+b,0);
+  else if(currentFx==='AVERAGE') result = values.reduce((a,b)=>a+b,0)/values.length;
+  else if(currentFx==='MAX') result = Math.max(...values);
+  else if(currentFx==='MIN') result = Math.min(...values);
+  document.getElementById('sim-result').textContent = 'Hasil: ' + (Number.isInteger(result)?result:result.toFixed(1));
+  document.getElementById('telem-sel').textContent = 'Sel terisi: ' + values.length;
+  drawChart(values);
+}
+function drawChart(values){
+  const svg = document.getElementById('chart-svg');
+  const max = Math.max(...values, 1);
+  const barW = 50, gap = 22, baseY = 260, chartH = 200;
+  let svgContent = '';
+  const colors = ['#38bdf8','#1e88d6','#0e5e9c','#7fd0ff','#0284c7'];
+  values.forEach((v,i)=>{
+    const h = (v/max)*chartH;
+    const x = 30 + i*(barW+gap);
+    const y = baseY - h;
+    svgContent += `<rect x="${x}" y="${baseY}" width="${barW}" height="2" rx="6" fill="${colors[i%colors.length]}">
+      <animate attributeName="y" from="${baseY}" to="${y}" dur="0.5s" fill="freeze"/>
+      <animate attributeName="height" from="2" to="${h}" dur="0.5s" fill="freeze"/>
+    </rect>`;
+    svgContent += `<rect x="${x-6}" y="${y-24}" width="${barW+12}" height="20" rx="6" fill="white" stroke="#0e5e9c" stroke-width="1.5"/>`;
+    svgContent += `<text x="${x+barW/2}" y="${y-10}" font-size="13" font-weight="800" fill="#0e5e9c" text-anchor="middle">${v}</text>`;
+    svgContent += `<text x="${x+barW/2}" y="${baseY+18}" font-size="12" font-weight="700" fill="#4a6b85" text-anchor="middle">A${i+1}</text>`;
+  });
+  svgContent += `<line x1="20" y1="${baseY}" x2="380" y2="${baseY}" stroke="#94a3b8" stroke-width="2"/>`;
+  svg.innerHTML = svgContent;
+}
+
+/* ================= EVALUASI ================= */
+const babakA = [
+  { q:"Tanda apa yang digunakan untuk memulai sebuah rumus di spreadsheet?", opts:["=","+","#","$"], correct:0 },
+  { q:"Fungsi apa yang digunakan untuk menjumlahkan sekumpulan data?", opts:["AVERAGE","SUM","COUNT","MAX"], correct:1 },
+  { q:"Apa ekstensi file bawaan Microsoft Excel?", opts:[".docx",".pptx",".xlsx",".pdf"], correct:2 }
+];
+const babakB = [
+  { term:"Cell", def:"Perpotongan antara kolom dan baris tempat data diketik" },
+  { term:"Formula Bar", def:"Tempat menuliskan dan menampilkan rumus yang sedang aktif" },
+  { term:"Sheet Tab", def:"Tab untuk berpindah antar lembar kerja dalam satu file" },
+  { term:"Chart", def:"Tampilan visual dari data berupa grafik" }
+];
+const babakC = [
+  { s:"Rumus di Excel selalu diawali dengan tanda '='.", correct:true },
+  { s:"Fitur Sort hanya bisa mengurutkan data dari A ke Z, tidak bisa dari Z ke A.", correct:false },
+  { s:"Grafik (Chart) berguna untuk membuat data lebih mudah dipahami secara visual.", correct:true }
+];
+let scoreA=0, scoreB=0, scoreC=0;
+let answeredA=0, matchedPairs=0, answeredC=0;
+let selectedLeft = null;
+
+function renderBabakA(){
+  const c = document.getElementById('babakA-container');
+  c.innerHTML='';
+  babakA.forEach((item,qi)=>{
+    const div = document.createElement('div'); div.className='q-card';
+    div.innerHTML = `<p class="q-text">${qi+1}. ${item.q}</p>
+      <div class="opts-row">${item.opts.map((o,oi)=>`<button class="opt-btn" onclick="answerA(${qi},${oi},this)">${o}</button>`).join('')}</div>`;
+    c.appendChild(div);
+  });
+}
+function answerA(qi, oi, btn){
+  const item = babakA[qi];
+  const row = btn.parentElement;
+  if(row.dataset.answered) return;
+  row.dataset.answered = "1";
+  const buttons = row.querySelectorAll('.opt-btn');
+  buttons.forEach(b=>b.style.pointerEvents='none');
+  if(oi===item.correct){
+    btn.classList.add('correct'); sfxCorrect(); scoreA += 10;
+  } else {
+    btn.classList.add('wrong'); sfxWrong();
+    buttons[item.correct].classList.add('correct');
+  }
+  answeredA++;
+  if(answeredA===babakA.length){
+    setTimeout(()=>goRound('B'), 700);
+  }
+}
+
+function renderBabakB(){
+  const left = document.getElementById('match-left');
+  const right = document.getElementById('match-right');
+  left.innerHTML=''; right.innerHTML='';
+  const shuffledRight = [...babakB].sort(()=>Math.random()-0.5);
+  babakB.forEach((item,i)=>{
+    const l = document.createElement('div'); l.className='match-item'; l.textContent=item.term;
+    l.dataset.term = item.term;
+    l.onclick = ()=>selectLeft(l);
+    left.appendChild(l);
+  });
+  shuffledRight.forEach((item)=>{
+    const r = document.createElement('div'); r.className='match-item'; r.textContent=item.def;
+    r.dataset.term = item.term;
+    r.onclick = ()=>selectRight(r);
+    right.appendChild(r);
+  });
+  matchedPairs=0;
+  document.getElementById('match-svg-lines').innerHTML='';
+}
+function selectLeft(el){
+  if(el.classList.contains('matched')) return;
+  sfxClick();
+  document.querySelectorAll('#match-left .match-item').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedLeft = el;
+}
+function selectRight(el){
+  if(el.classList.contains('matched') || !selectedLeft) return;
+  sfxClick();
+  if(selectedLeft.dataset.term === el.dataset.term){
+    selectedLeft.classList.add('matched'); selectedLeft.classList.remove('selected');
+    el.classList.add('matched');
+    drawMatchLine(selectedLeft, el);
+    sfxCorrect();
+    scoreB += 10;
+    matchedPairs++;
+    selectedLeft = null;
+    if(matchedPairs===babakB.length){
+      setTimeout(()=>goRound('C'), 700);
+    }
+  } else {
+    sfxWrong();
+    el.style.background='#fee2e2';
+    setTimeout(()=>{ el.style.background=''; }, 350);
+  }
+}
+function drawMatchLine(leftEl, rightEl){
+  const svg = document.getElementById('match-svg-lines');
+  const wrap = document.querySelector('.match-wrap').getBoundingClientRect();
+  const lr = leftEl.getBoundingClientRect();
+  const rr = rightEl.getBoundingClientRect();
+  const x1 = lr.right - wrap.left, y1 = lr.top + lr.height/2 - wrap.top;
+  const x2 = rr.left - wrap.left, y2 = rr.top + rr.height/2 - wrap.top;
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+  line.setAttribute('x2',x1); line.setAttribute('y2',y1);
+  line.setAttribute('stroke','#22c55e'); line.setAttribute('stroke-width','3.5');
+  line.setAttribute('stroke-linecap','round');
+  svg.appendChild(line);
+  let t=0;
+  const anim = setInterval(()=>{
+    t += 0.12;
+    if(t>=1){ t=1; clearInterval(anim); }
+    line.setAttribute('x2', x1 + (x2-x1)*t);
+    line.setAttribute('y2', y1 + (y2-y1)*t);
+  }, 16);
+}
+
+function renderBabakC(){
+  const c = document.getElementById('babakC-container');
+  c.innerHTML='';
+  babakC.forEach((item,i)=>{
+    const div = document.createElement('div'); div.className='tf-item';
+    div.innerHTML = `<p>${i+1}. ${item.s}</p>
+      <div class="tf-btns">
+        <button class="tf-btn tbtn" onclick="answerC(${i},true,this)">✓ BENAR</button>
+        <button class="tf-btn fbtn" onclick="answerC(${i},false,this)">✗ SALAH</button>
+      </div>`;
+    c.appendChild(div);
+  });
+}
+function answerC(i, val, btn){
+  const item = babakC[i];
+  const row = btn.closest('.tf-item');
+  if(row.dataset.answered) return;
+  row.dataset.answered="1";
+  row.querySelectorAll('.tf-btn').forEach(b=>b.disabled=true);
+  if(val===item.correct){ sfxCorrect(); scoreC += 10; btn.style.outline='3px solid #fff'; }
+  else { sfxWrong(); btn.style.outline='3px solid #fff'; }
+  answeredC++;
+  if(answeredC===babakC.length){
+    setTimeout(()=>goRound('D'), 700);
+  }
+}
+
+function goRound(letter){
+  ['A','B','C','D'].forEach(l=>{
+    document.getElementById('round-'+l).classList.remove('active');
+    const dot = document.getElementById('dot-'+l);
+    dot.classList.remove('current','done');
+  });
+  document.getElementById('round-'+letter).classList.add('active');
+  ['A','B','C','D'].forEach(l=>{
+    const dot = document.getElementById('dot-'+l);
+    if(l<letter) dot.classList.add('done');
+    else if(l===letter) dot.classList.add('current');
+  });
+  if(letter==='D'){
+    const total = scoreA+scoreB+scoreC;
+    document.getElementById('final-score').textContent = total+' / 100';
+    document.getElementById('score-A').textContent = scoreA;
+    document.getElementById('score-B').textContent = scoreB;
+    document.getElementById('score-C').textContent = scoreC;
+    sfxCorrect();
+  }
+}
+
+function resetEval(){
+  sfxClick();
+  scoreA=0; scoreB=0; scoreC=0; answeredA=0; matchedPairs=0; answeredC=0; selectedLeft=null;
+  renderBabakA(); renderBabakB(); renderBabakC();
+  goRound('A');
+}
+
+/* ================= INIT ================= */
+renderBabakA();
+renderBabakB();
+renderBabakC();
+calcSim();
+</script>
+</body>
+</html>
